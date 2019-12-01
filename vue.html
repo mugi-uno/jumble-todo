@@ -1,0 +1,44 @@
+<head>
+  <link href="https://fonts.googleapis.com/css?family=Noto+Sans+JP" rel="stylesheet">
+  <style>
+    * {
+      font-family: "Noto Sans JP";
+      color: #333;
+      text-align: center;
+    }
+
+    .todo {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .todo div {
+      font-weight: bold;
+      font-size: 1.2rem;
+      width: 300px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    input {
+      min-width: 300px;
+    }
+
+    pre {
+      font-size: 0.5rem;
+      white-space: normal;
+      word-break: break-all;
+      padding: 20px;
+      margin: 20px;
+      border: 1px solid #555;
+      color: #555;
+    }
+  </style>
+</head>
+
+<body>
+<script>
+((d, b) => { const num = 1; const html = [` <h1>jQuery TODO</h1> <div class="todo"></div> <hr /> <input type="text" class="text" /><button class="add">ADD</button> <hr /> <h3>NEXT</h3> <pre class="next"></pre> `,` <h1>Vue.js TODO</h1> <div class="app"> <div class="todo"> <div v-for="(task, i) in todo"> {{task}} <button @click="del(i)">DEL</button> </div> </div> <hr /> <input type="text" v-model="text" /><button @click="add">ADD</button> <hr /> <h3>NEXT</h3> <pre class="next">{{html}}</pre> </div> `,` <h1>React TODO</h1> <div class="app"></div> `,` <h1>Stimulusjs TODO</h1> <div class="app" data-controller="todo"> <div class="todo" data-target="todo.list"></div> <hr /> <input type="text" data-target="todo.text" /> <button data-action="todo#add">ADD</button> <hr /> <h3>NEXT</h3> <pre class="next" data-target="todo.next"></pre> </div> `]; const len = html.length; b.innerHTML = html[num]; const scripts = [` (() => { const s = document.createElement("script"); s.src = "https://code.jquery.com/jquery-3.4.1.min.js"; s.addEventListener("load", () => { const $add = $(".add"), $todo = $(".todo"), $text = $(".text"); $add.on("click", () => { const $del = $("<button>") .addClass("del") .text("DEL"); const $task = $("<div>") .addClass("task") .text($text.val()) .append($del); $todo.append($task); $todo.on("click", ".del", e => { $(e.target) .closest(".task") .remove(); }); }); $(".next").text(\`_SCRIPT_\`); }); document.body.appendChild(s); })(); `,` const s = document.createElement("script"); s.src = "https://cdn.jsdelivr.net/npm/vue@2.6.0"; s.addEventListener("load", () => { new Vue({ data() { return { text: "", html: \`_SCRIPT_\`, todo: [] }; }, methods: { add() { this.todo.push(this.text); }, del(i) { this.todo.splice(i, 1); } } }).$mount(".app"); }); document.body.appendChild(s); `,` const next = btoa(\`_SCRIPT_\`); const load = (url) => { return new Promise(resolve => { const s = document.createElement("script"); s.src = url; s.addEventListener("load", resolve); document.body.append(s); }); }; load("https://unpkg.com/react@16/umd/react.production.min.js") .then(() => load("https://unpkg.com/react-dom@16/umd/react-dom.production.min.js")) .then(() => load("https://unpkg.com/@babel/standalone/babel.min.js")) .then(() => { const s = document.createElement("script"); s.type = "text/jsx"; s.textContent = \` const next = '\` + next + \`'; const { useState, useCallback } = React; const Task = (props) => { return ( <div> {props.task} <button onClick={props.onDelete}>DEL</button> </div> ); }; const Todo = () => { const [text, setText] = useState(""); const [todo, setTodo] = useState([]); const handleChange = useCallback((event) => { setText(event.target.value); }, []); const handleAdd = useCallback(() => { setTodo([ ...todo, text ]); }, [todo, text]); const handleDelete = useCallback((index) => { const newTodo = [...todo]; newTodo.splice(index, 1); setTodo(newTodo); }, [todo]); return ( <React.Fragment> <div className="todo"> { todo.map((task, index) =>( <Task task={task} onDelete={() => handleDelete(index)} /> )) } </div> <hr /> <input type="text" value={text} onChange={handleChange} /> <button onClick={handleAdd}>ADD</button> <hr /> <h3>NEXT</h3> <pre className="next">{atob(next)}</pre> </React.Fragment> ); }; ReactDOM.render(<Todo />, document.querySelector(".app")); \`; document.body.append(s); Babel.transformScriptTags(); }); `,` const s = document.createElement("script"); s.src = "https://unpkg.com/stimulus/dist/stimulus.umd.js"; s.addEventListener("load", () => { const application = Stimulus.Application.start(); class TodoController extends Stimulus.Controller { static get targets() { return ["list", "text", "next"] } initialize() { this.todo = []; this.nextTarget.innerText = \`_SCRIPT_\`; } add() { this.todo.push(this.textTarget.value); this.render(); } delete(e) { this.todo.splice(e.target.dataset.index, 1); this.render(); } render() { const fragment = document.createDocumentFragment(); this.todo.forEach((task, index) => { const div = document.createElement("div"); div.innerText = task; const button = document.createElement("button"); button.innerText = "DEL"; button.dataset.action = "todo#delete"; button.dataset.index = index; div.appendChild(button); fragment.appendChild(div); }); this.listTarget.innerHTML = ""; this.listTarget.appendChild(fragment); } }; application.register("todo", TodoController); }); document.body.appendChild(s); `]; const next = (num + 1) % scripts.length; const nextScript = ` ((d, b) => { const num = _NUM_; const html = [_HTML_]; const len = html.length; b.innerHTML = html[num]; const scripts = [_SCRIPTS_]; const next = (num + 1) % scripts.length; const nextScript = \`_NEXT_\`; const esc = (str) => str.replace(/\\\\/gm, '\\\\\\\\').replace(/\`/gm, '\\\\\\\`'); const nextHtml = nextScript.replace("_NEXT_", esc(nextScript)); const script = scripts[num].replace( "_SCRIPT_", esc( nextHtml .replace("_NUM_", "" + next) .replace("_HTML_", html.map(h => \`\\\`\` + h + \`\\\`\`).join(",")) .replace("_SCRIPTS_", scripts.map(s => \`\\\`\` + esc(s) + \`\\\`\`).join(",")) ) ); window.eval(script); })(document, document.body); `; const esc = (str) => str.replace(/\\/gm, '\\\\').replace(/`/gm, '\\\`'); const nextHtml = nextScript.replace("_NEXT_", esc(nextScript)); const script = scripts[num].replace( "_SCRIPT_", esc( nextHtml .replace("_NUM_", "" + next) .replace("_HTML_", html.map(h => `\`` + h + `\``).join(",")) .replace("_SCRIPTS_", scripts.map(s => `\`` + esc(s) + `\``).join(",")) ) ); window.eval(script); })(document, document.body);
+</script>
+</body>
